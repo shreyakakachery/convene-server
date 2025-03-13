@@ -10,6 +10,8 @@ export function up(knex) {
       table.decimal('stop_lat', 9, 6).notNullable();
       table.decimal('stop_lon', 9, 6).notNullable();
       table.string('zone_id').notNullable();
+      table.integer('lat_index').notNullable();
+      table.integer('lon_index').notNullable();
     });
   };
   
