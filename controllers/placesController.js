@@ -23,11 +23,15 @@ export async function getPlaces(req, res) {
     });
 
     const cafes = response.data?.elements.map((cafe) => ({
-      name: cafe.tags.name || "Unnamed Cafe",
-      lat: cafe.lat,
-      lon: cafe.lon,
-      address: cafe.tags["addr:street"] || "Unknown Address",
-    //   tags: cafe.tags    
+      id: cafe.id,
+      name: cafe.tags.name || "Name Not Found",
+      lat: cafe.lat || "Unknown",
+      lon: cafe.lon || "Unknown",
+      number: cafe.tags['addr:housenumber'] || "Unknown",
+      street: cafe.tags['addr:street'] || "Address Not Found",
+      amenity: cafe.tags.amenity  || "Unknown",
+      indoor_seating: cafe.tags.indoor_seating  || "Unknown",
+      outdoor_seating: cafe.tags.outdoor_seating  || "Unknown",      
     })) || [];
 
     res.json(cafes);
