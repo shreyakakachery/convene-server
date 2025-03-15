@@ -11,6 +11,7 @@ const BACKEND_URL = process.env.BACKEND_URL;
 
 // middleware to parse req.body
 app.use(express.json()); // do i need this? since i won't be using req.body? but i am using req.query... let's see!
+app.use(cors({ origin: process.env.CORS_ORIGIN }));
 
 // endpoints
 
