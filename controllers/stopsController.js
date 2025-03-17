@@ -126,7 +126,7 @@ export const getStops = async (req, res) => {
       // For each stop in Route A, find the closest stop in Route B
       routeAStops.forEach((stopA) => {
         let closestStopB = null;
-        let minDistance = Infinity;
+        let minDistance = Infinity; // change this to mox distance to filter
 
         routeBStops.forEach((stopB) => {
           const distance = haversineDistance(
@@ -147,6 +147,8 @@ export const getStops = async (req, res) => {
             routeA_stop: stopA,
             routeB_stop: closestStopB,
             distance: minDistance,
+            mid_lat: (parseFloat(stopA.stop_lat) + parseFloat(closestStopB.stop_lat)) / 2,
+            mid_lon: (parseFloat(stopA.stop_lon) + parseFloat(closestStopB.stop_lon)) / 2
           });
         }
       });
