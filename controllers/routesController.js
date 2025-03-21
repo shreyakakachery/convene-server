@@ -49,8 +49,8 @@ async function getStopsWithRoutes(latIndex, lonIndex) {
     const stops = await knex("stops")
       .select("stop_id", "stop_code", "stop_name", "stop_lat", "stop_lon")
       .where({ lat_index: latIndex, lon_index: lonIndex }); // can change to .wherebetween after i reseed the data with 0.005 gridsize
-    //   .whereBetween("lat_index", [latIndex - 1, latIndex + 1])
-    //   .whereBetween("lon_index", [lonIndex - 1, lonIndex + 1]);
+    // .whereBetween("lat_index", [latIndex - 1, latIndex + 1])
+    // .whereBetween("lon_index", [lonIndex - 1, lonIndex + 1]);
 
     let expandedStops = [];
 
@@ -59,9 +59,8 @@ async function getStopsWithRoutes(latIndex, lonIndex) {
         .select("route_name")
         .where("stop_id", stop.stop_id);
 
-      if (!routes || routes.length === 0) {
-        console.warn(`No routes found for stop_id: ${stop.stop_id}`);
-        continue; // Skip to next stop
+      if (!routes) {
+        console.log(`No routes found`);
       }
 
       routes.forEach((route) => {
