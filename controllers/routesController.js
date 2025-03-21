@@ -47,7 +47,7 @@ async function getCoordinates(address) {
 async function getStopsWithRoutes(latIndex, lonIndex) {
   try {
     const stops = await knex("stops")
-      .select("stop_id", "stop_code", "stop_name", "stop_lat", "stop_lon")
+      .select("stop_id", "stop_code", "stop_name", "stop_lat", "stop_lon", "zone_id")
       .where({ lat_index: latIndex, lon_index: lonIndex }); // can change to .wherebetween after i reseed the data with 0.005 gridsize
     // .whereBetween("lat_index", [latIndex - 1, latIndex + 1])
     // .whereBetween("lon_index", [lonIndex - 1, lonIndex + 1]);
