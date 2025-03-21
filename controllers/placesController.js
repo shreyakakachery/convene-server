@@ -7,13 +7,22 @@ export async function getPlaces(req, res) {
     return res.status(400).json({ error: "Latitude and longitude are required" });
   }
 
+  // const query = `
+  //   [out:json];
+  //   node
+  //     ["amenity"="cafe"]
+  //     (around:${radius},${lat},${lon});
+  //   out;
+  // `;
+
   const query = `
-    [out:json];
-    node
-      ["amenity"="cafe"]
-      (around:${radius},${lat},${lon});
-    out;
-  `;
+  [out:json];
+  (
+    node["amenity"="cafe"](around:${radius},${lat},${lon});
+    node["amenity"="restaurant"](around:${radius},${lat},${lon});
+  );
+  out;
+`;
 
   const url = "https://overpass-api.de/api/interpreter";
 
@@ -22,21 +31,21 @@ export async function getPlaces(req, res) {
       headers: { "Content-Type": "application/x-www-form-urlencoded" },
     });
 
-    const cafes = response.data?.elements.map((cafe) => ({
-      id: cafe.id,
-      name: cafe.tags.name || "Name Not Found",
-      lat: cafe.lat || "Unknown",
-      lon: cafe.lon || "Unknown",
-      number: cafe.tags['addr:housenumber'] || "Unknown",
-      street: cafe.tags['addr:street'] || "Address Not Found",
-      amenity: cafe.tags.amenity  || "Unknown",
-      indoor_seating: cafe.tags.indoor_seating  || "Unknown",
-      outdoor_seating: cafe.tags.outdoor_seating  || "Unknown",      
+    const places = response.data?.elements.map((place) => ({
+      id: place.id,
+      name: place.tags.name || "Name Not Found",
+      lat: place.lat || "Unknown",
+      lon: place.lon || "Unknown",
+      number: place.tags['addr:housenumber'] || "Unknown",
+      street: place.tags['addr:street'] || "Address Not Found",
+      amenity: place.tags.amenity  || "Unknown",
+      indoor_seating: place.tags.indoor_seating  || "Unknown",
+      outdoor_seating: place.tags.outdoor_seating  || "Unknown",      
     })) || [];
 
-    res.json(cafes);
+    res.json(places);
   } catch (error) {
-    console.error("Error fetching cafes:", error);
+    console.error("Error fetching places:", error);
     res.status(500).json({ error: "Error fetching places" });
   }
 }
