@@ -51,10 +51,36 @@ export const getStops = async (req, res) => {
           .andWhere("stop_id", originStopB)
       );
 
+
+    // Function to filter out duplicate stop IDs while maintaining order
+    const filterUniqueStops = (stops) => {
+      const seen = new Set();
+      return stops.filter((stop) => {
+        if (!seen.has(stop.stop_id)) {
+          seen.add(stop.stop_id);
+          return true;
+        }
+        return false;
+      });
+    };
+
+    // Filter out duplicate stops
+    const filteredRouteStopsA = filterUniqueStops(routeStopsA);
+    const filteredRouteStopsB = filterUniqueStops(routeStopsB);
+
+    console.log("STARTING FROM HERE")
+
+    console.log(filteredRouteStopsA)
+    console.log(filteredRouteStopsB)
+
     // Extract all stop IDs from both routes
-    const stopIdsA = routeStopsA.map((stop) => stop.stop_id);
-    const stopIdsB = routeStopsB.map((stop) => stop.stop_id);
+    // const stopIdsA = routeStopsA.map((stop) => stop.stop_id);
+    // const stopIdsB = routeStopsB.map((stop) => stop.stop_id);
+    const stopIdsA = filteredRouteStopsA.map((stop) => stop.stop_id);
+    const stopIdsB = filteredRouteStopsB.map((stop) => stop.stop_id);
     const allStopIds = [...new Set([...stopIdsA, ...stopIdsB])]; // Remove duplicates
+
+    // console.log(stopIdsB)
 
     // Get stop details from "stops" table for all stop IDs
     const stopDetails = await knex("stops")
@@ -71,7 +97,8 @@ export const getStops = async (req, res) => {
       );
 
     // Merge stop details into the routeStopsA and routeStopsB arrays
-    const enrichedStopsA = routeStopsA.map((stop) => {
+    // const enrichedStopsA = routeStopsA.map((stop) => {
+      const enrichedStopsA = filteredRouteStopsA.map((stop) => {
       const stopInfo = stopDetails.find((s) => s.stop_id === stop.stop_id);
       return {
         ...stop, // Keep existing route stop info
@@ -79,7 +106,8 @@ export const getStops = async (req, res) => {
       };
     });
 
-    const enrichedStopsB = routeStopsB.map((stop) => {
+    // const enrichedStopsB = routeStopsB.map((stop) => {
+      const enrichedStopsB = filteredRouteStopsB.map((stop) => {
       const stopInfo = stopDetails.find((s) => s.stop_id === stop.stop_id);
       return {
         ...stop, // Keep existing route stop info
@@ -147,8 +175,12 @@ export const getStops = async (req, res) => {
             routeA_stop: stopA,
             routeB_stop: closestStopB,
             distance: minDistance,
-            mid_lat: (parseFloat(stopA.stop_lat) + parseFloat(closestStopB.stop_lat)) / 2,
-            mid_lon: (parseFloat(stopA.stop_lon) + parseFloat(closestStopB.stop_lon)) / 2
+            mid_lat:
+              (parseFloat(stopA.stop_lat) + parseFloat(closestStopB.stop_lat)) /
+              2,
+            mid_lon:
+              (parseFloat(stopA.stop_lon) + parseFloat(closestStopB.stop_lon)) /
+              2,
           });
         }
       });
