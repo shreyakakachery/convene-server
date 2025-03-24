@@ -41,7 +41,7 @@ router.get("/", async (req, res) => {
         .send("Could not retrieve stops for one of the addresses.");
     }
 
-    res.json([
+    res.status(200).json([
       {
         address: locA,
         filteredStops: filteredStopsA,

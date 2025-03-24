@@ -42,7 +42,7 @@ export async function getPlaces(req, res) {
         amenity: place.tags.amenity || "Unknown",
       })) || [];
 
-    res.json(places);
+    res.status(200).json(places);
   } catch (error) {
     console.error("Error fetching places:", error);
     res.status(500).json({ error: "Error fetching places" });
