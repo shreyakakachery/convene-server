@@ -1,11 +1,9 @@
-import axios from "axios";
 import initKnex from "knex";
 import configuration from "../knexfile.js";
 const knex = initKnex(configuration);
 
-// Haversine distance calculation
 export const haversineDistance = (lat1, lon1, lat2, lon2) => {
-  const R = 6371; // Radius of the Earth in km
+  const earthRadius = 6371;
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
   const dLon = ((lon2 - lon1) * Math.PI) / 180;
   const a =
@@ -15,19 +13,17 @@ export const haversineDistance = (lat1, lon1, lat2, lon2) => {
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c; // Distance in kilometers
+  return earthRadius * c;
 };
 
-// Controller function for handling stop route logic
 export const getStops = async (req, res) => {
   try {
-    const { routeA, originStopA, routeB, originStopB } = req.query; // Extract query params
+    const { routeA, originStopA, routeB, originStopB } = req.query;
 
     if (!routeA || !originStopA || !routeB || !originStopB) {
       return res.status(400).json({ error: "Missing required parameters" });
     }
 
-    // Get route stops for Route A
     const routeStopsA = await knex("routes")
       .where("route_name", routeA)
       .andWhere(
@@ -39,7 +35,6 @@ export const getStops = async (req, res) => {
           .andWhere("stop_id", originStopA)
       );
 
-    // Get route stops for Route B
     const routeStopsB = await knex("routes")
       .where("route_name", routeB)
       .andWhere(
@@ -51,8 +46,6 @@ export const getStops = async (req, res) => {
           .andWhere("stop_id", originStopB)
       );
 
-
-    // Function to filter out duplicate stop IDs while maintaining order
     const filterUniqueStops = (stops) => {
       const seen = new Set();
       return stops.filter((stop) => {
@@ -64,25 +57,13 @@ export const getStops = async (req, res) => {
       });
     };
 
-    // Filter out duplicate stops
     const filteredRouteStopsA = filterUniqueStops(routeStopsA);
     const filteredRouteStopsB = filterUniqueStops(routeStopsB);
 
-    console.log("STARTING FROM HERE")
-
-    console.log(filteredRouteStopsA)
-    console.log(filteredRouteStopsB)
-
-    // Extract all stop IDs from both routes
-    // const stopIdsA = routeStopsA.map((stop) => stop.stop_id);
-    // const stopIdsB = routeStopsB.map((stop) => stop.stop_id);
     const stopIdsA = filteredRouteStopsA.map((stop) => stop.stop_id);
     const stopIdsB = filteredRouteStopsB.map((stop) => stop.stop_id);
-    const allStopIds = [...new Set([...stopIdsA, ...stopIdsB])]; // Remove duplicates
+    const allStopIds = [...new Set([...stopIdsA, ...stopIdsB])];
 
-    // console.log(stopIdsB)
-
-    // Get stop details from "stops" table for all stop IDs
     const stopDetails = await knex("stops")
       .whereIn("stop_id", allStopIds)
       .select(
@@ -96,29 +77,24 @@ export const getStops = async (req, res) => {
         "zone_id"
       );
 
-    // Merge stop details into the routeStopsA and routeStopsB arrays
-    // const enrichedStopsA = routeStopsA.map((stop) => {
-      const enrichedStopsA = filteredRouteStopsA.map((stop) => {
+    const enrichedStopsA = filteredRouteStopsA.map((stop) => {
       const stopInfo = stopDetails.find((s) => s.stop_id === stop.stop_id);
       return {
-        ...stop, // Keep existing route stop info
-        ...stopInfo, // Add stop details
+        ...stop,
+        ...stopInfo,
       };
     });
 
-    // const enrichedStopsB = routeStopsB.map((stop) => {
-      const enrichedStopsB = filteredRouteStopsB.map((stop) => {
+    const enrichedStopsB = filteredRouteStopsB.map((stop) => {
       const stopInfo = stopDetails.find((s) => s.stop_id === stop.stop_id);
       return {
-        ...stop, // Keep existing route stop info
-        ...stopInfo, // Add stop details
+        ...stop,
+        ...stopInfo,
       };
     });
 
-    // Combine both enriched stops into one array
     const combinedStops = [...enrichedStopsA, ...enrichedStopsB];
 
-    // Group stops by grid coordinates
     const groupStopsByGrid = (stops) => {
       const groupedStops = {};
       stops.forEach((stop) => {
@@ -133,28 +109,24 @@ export const getStops = async (req, res) => {
 
     const stopPairs = groupStopsByGrid(combinedStops);
 
-    // Filter stop pairs where there are more than one unique route
     const filteredStopPairs = Object.fromEntries(
       Object.entries(stopPairs).filter(([key, value]) => {
         const uniqueRoutes = [...new Set(value.map((stop) => stop.route_name))];
-        return uniqueRoutes.length > 1; // Keep only groups with more than one unique route
+        return uniqueRoutes.length > 1;
       })
     );
 
-    // Now, find closest pairs for each group (after filtering)
     const closestStopPairs = {};
 
     Object.entries(filteredStopPairs).forEach(([key, value]) => {
-      // Group stops by route name
       const routeAStops = value.filter((stop) => stop.route_name === routeA);
       const routeBStops = value.filter((stop) => stop.route_name === routeB);
 
       closestStopPairs[key] = [];
 
-      // For each stop in Route A, find the closest stop in Route B
       routeAStops.forEach((stopA) => {
         let closestStopB = null;
-        let minDistance = Infinity; // change this to mox distance to filter
+        let minDistance = Infinity;
 
         routeBStops.forEach((stopB) => {
           const distance = haversineDistance(
@@ -165,11 +137,10 @@ export const getStops = async (req, res) => {
           );
           if (distance < minDistance) {
             minDistance = distance;
-            closestStopB = stopB; // Store closest stop from routeB
+            closestStopB = stopB;
           }
         });
 
-        // Add closest pair (Route A stop and the closest Route B stop)
         if (closestStopB) {
           closestStopPairs[key].push({
             routeA_stop: stopA,

@@ -17,18 +17,11 @@ export async function getPlaces(req, res) {
     out center;
   `;
 
-
-  // const url = "https://overpass-api.de/api/interpreter"; // slow mirror, used by many
-
-  const url = "https://overpass.kumi.systems/api/interpreter"; // faster, usa mirror
-
-  // https://overpass.openstreetmap.fr/api/interpreter // japan mirror
-
-  // https://overpass.nchc.org.tw/api/interpreter // germany mirror
+  const overpassUrl = "https://overpass.kumi.systems/api/interpreter";
 
   try {
     const response = await axios.post(
-      url,
+      overpassUrl,
       `data=${encodeURIComponent(query)}`,
       {
         headers: {

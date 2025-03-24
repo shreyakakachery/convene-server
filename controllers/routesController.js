@@ -43,12 +43,18 @@ async function getCoordinates(address) {
   }
 }
 
-// Helper function to get nearby stops and routes ROUTES STRING WITH MULTIPLE STOPS
 async function getStopsWithRoutes(latIndex, lonIndex) {
   try {
     const stops = await knex("stops")
-      .select("stop_id", "stop_code", "stop_name", "stop_lat", "stop_lon", "zone_id")
-      .where({ lat_index: latIndex, lon_index: lonIndex }); // can change to .wherebetween after i reseed the data with 0.005 gridsize
+      .select(
+        "stop_id",
+        "stop_code",
+        "stop_name",
+        "stop_lat",
+        "stop_lon",
+        "zone_id"
+      )
+      .where({ lat_index: latIndex, lon_index: lonIndex }); // for future: change to .wherebetween after re-seeding the data with 0.005 gridsize
     // .whereBetween("lat_index", [latIndex - 1, latIndex + 1])
     // .whereBetween("lon_index", [lonIndex - 1, lonIndex + 1]);
 
@@ -60,13 +66,13 @@ async function getStopsWithRoutes(latIndex, lonIndex) {
         .where("stop_id", stop.stop_id);
 
       if (!routes) {
-        console.log(`No routes found`);
+        console.warn(`No routes found`);
       }
 
       routes.forEach((route) => {
         expandedStops.push({
           ...stop,
-          route: route.route_name, // Single route instead of an array
+          route: route.route_name,
         });
       });
     }
@@ -78,34 +84,8 @@ async function getStopsWithRoutes(latIndex, lonIndex) {
   }
 }
 
-// using JOIN but there is some issue with the route name
-// async function getStopsWithRoutes(latIndex, lonIndex) {
-//   try {
-//     const stops = await knex("stops")
-//       .join("routes", "stops.stop_id", "routes.stop_id") // Join the routes table with stops
-//       .select(
-//         "stops.stop_id",
-//         "stops.stop_code",
-//         "stops.stop_name",
-//         "stops.stop_lat",
-//         "stops.stop_lon",
-//         "routes.route_name"
-//       )
-//       .where({ lat_index: latIndex, lon_index: lonIndex });
-
-//     return stops.map((stop) => ({
-//       ...stop,
-//       route: stop.route_name, // Directly assign route_name to stop
-//     }));
-//   } catch (error) {
-//     console.error("Error fetching stops with routes:", error.message);
-//     return [];
-//   }
-// }
-
-// Helper function to calculate the Haversine distance
 function haversineDistance(lat1, lon1, lat2, lon2) {
-  const R = 6371;
+  const earthRadius = 6371;
   const dLat = (lat2 - lat1) * (Math.PI / 180);
   const dLon = (lon2 - lon1) * (Math.PI / 180);
   const a =
@@ -115,11 +95,10 @@ function haversineDistance(lat1, lon1, lat2, lon2) {
       Math.sin(dLon / 2) *
       Math.sin(dLon / 2);
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  return R * c;
+  return earthRadius * c;
 }
 
 async function filterClosestStopsByRoute(stops, inputLat, inputLon) {
-  // 1️⃣ Compute distance for each stop
   stops.forEach((stop) => {
     stop.distance = haversineDistance(
       inputLat,
@@ -129,7 +108,6 @@ async function filterClosestStopsByRoute(stops, inputLat, inputLon) {
     );
   });
 
-  // 2️⃣ Group stops by route
   const stopsByRoute = stops.reduce((acc, stop) => {
     const route = stop.route;
     if (!acc[route]) acc[route] = [];
@@ -137,21 +115,15 @@ async function filterClosestStopsByRoute(stops, inputLat, inputLon) {
     return acc;
   }, {});
 
-  // 3️⃣ For each route, keep only the closest stop
   const closestStops = [];
   for (const route in stopsByRoute) {
     const stopsGroup = stopsByRoute[route];
 
-    // Sort the stops by distance (closest to farthest)
     stopsGroup.sort((a, b) => a.distance - b.distance);
 
-    // Add the closest stop for this route
     closestStops.push(stopsGroup[0]);
   }
 
-  //   return closestStops;
-
-  // 4️⃣ Filter out routes that start with "N" from the closestStops
   const filteredStops = closestStops.filter(
     (stop) => !stop.route.startsWith("N")
   );
