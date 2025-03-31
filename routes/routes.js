@@ -17,11 +17,23 @@ const getFilteredStopsForAddress = async (address) => {
     addressInfo.latIndex,
     addressInfo.lonIndex
   );
-  return await filterClosestStopsByRoute(
+  // return await filterClosestStopsByRoute(
+  //   stops,
+  //   addressInfo.lat,
+  //   addressInfo.lon
+  // );
+  const filteredStops = await filterClosestStopsByRoute(
     stops,
     addressInfo.lat,
     addressInfo.lon
   );
+
+  // Return both stops and coordinates
+  return {
+    lat: addressInfo.lat,
+    lon: addressInfo.lon,
+    filteredStops,
+  };
 };
 
 router.get("/", async (req, res) => {
@@ -32,10 +44,19 @@ router.get("/", async (req, res) => {
       return res.status(400).send("Both locA and locB are required.");
     }
 
-    const filteredStopsA = await getFilteredStopsForAddress(locA);
-    const filteredStopsB = await getFilteredStopsForAddress(locB);
+    // const filteredStopsA = await getFilteredStopsForAddress(locA);
+    // const filteredStopsB = await getFilteredStopsForAddress(locB);
 
-    if (!filteredStopsA || !filteredStopsB) {
+    // if (!filteredStopsA || !filteredStopsB) {
+    //   return res
+    //     .status(404)
+    //     .send("Could not retrieve stops for one of the addresses.");
+    // }
+
+    const resultA = await getFilteredStopsForAddress(locA);
+    const resultB = await getFilteredStopsForAddress(locB);
+
+    if (!resultA || !resultB) {
       return res
         .status(404)
         .send("Could not retrieve stops for one of the addresses.");
@@ -44,11 +65,17 @@ router.get("/", async (req, res) => {
     res.status(200).json([
       {
         address: locA,
-        filteredStops: filteredStopsA,
+        lat: resultA.lat,
+        lon: resultA.lon,
+        // filteredStops: filteredStopsA,
+        filteredStops: resultA.filteredStops,
       },
       {
         address: locB,
-        filteredStops: filteredStopsB,
+        lat: resultB.lat,
+        lon: resultB.lon,
+        // filteredStops: filteredStopsB,
+        filteredStops: resultB.filteredStops,
       },
     ]);
   } catch (error) {
