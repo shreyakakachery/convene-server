@@ -3,6 +3,7 @@ import express from "express";
 import cors from "cors";
 const app = express();
 import routesRouter from "./routes/routes.js";
+import routeRouter from "./routes/route.js";
 import stopsRouter from "./routes/stops.js";
 import placesRouter from "./routes/places.js";
 
@@ -16,6 +17,7 @@ app.get("/", (_req, res) => {
 });
 
 app.use("/routes", routesRouter);
+app.use("/route", routeRouter);
 app.use("/stops", stopsRouter);
 app.use("/places", placesRouter);
 
