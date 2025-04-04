@@ -17,18 +17,13 @@ const getFilteredStopsForAddress = async (address) => {
     addressInfo.latIndex,
     addressInfo.lonIndex
   );
-  // return await filterClosestStopsByRoute(
-  //   stops,
-  //   addressInfo.lat,
-  //   addressInfo.lon
-  // );
+
   const filteredStops = await filterClosestStopsByRoute(
     stops,
     addressInfo.lat,
     addressInfo.lon
   );
 
-  // Return both stops and coordinates
   return {
     lat: addressInfo.lat,
     lon: addressInfo.lon,
@@ -44,15 +39,6 @@ router.get("/", async (req, res) => {
       return res.status(400).send("Both locA and locB are required.");
     }
 
-    // const filteredStopsA = await getFilteredStopsForAddress(locA);
-    // const filteredStopsB = await getFilteredStopsForAddress(locB);
-
-    // if (!filteredStopsA || !filteredStopsB) {
-    //   return res
-    //     .status(404)
-    //     .send("Could not retrieve stops for one of the addresses.");
-    // }
-
     const resultA = await getFilteredStopsForAddress(locA);
     const resultB = await getFilteredStopsForAddress(locB);
 
@@ -67,14 +53,12 @@ router.get("/", async (req, res) => {
         address: locA,
         lat: resultA.lat,
         lon: resultA.lon,
-        // filteredStops: filteredStopsA,
         filteredStops: resultA.filteredStops,
       },
       {
         address: locB,
         lat: resultB.lat,
         lon: resultB.lon,
-        // filteredStops: filteredStopsB,
         filteredStops: resultB.filteredStops,
       },
     ]);
