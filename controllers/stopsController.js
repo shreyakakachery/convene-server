@@ -96,12 +96,26 @@ export const getStops = async (req, res) => {
 
     const stopPairs = groupStopsByGrid(combinedStops);
 
+    // const filteredStopPairs = Object.fromEntries(
+    //   Object.entries(stopPairs).filter(([key, value]) => {
+    //     const uniqueRoutes = [...new Set(value.map((stop) => stop.route_name))];
+    //     return uniqueRoutes.length > 1;
+    //   })
+    // );
+
     const filteredStopPairs = Object.fromEntries(
       Object.entries(stopPairs).filter(([key, value]) => {
         const uniqueRoutes = [...new Set(value.map((stop) => stop.route_name))];
-        return uniqueRoutes.length > 1;
+    
+        // If it's the same route, allow intersections
+        if (routeA === routeB) {
+          return value.length > 1; // Ensure at least two different stops exist
+        }
+    
+        return uniqueRoutes.length > 1; // Original logic
       })
     );
+    
 
     const closestStopPairs = {};
 
