@@ -14,6 +14,9 @@ async function getCoordinates(address) {
           format: "json",
           limit: 1,
         },
+        headers: {
+          "User-Agent": "convene-app/1.0 (shreyakakachery@gmail.com)", 
+        },
       }
     );
 
